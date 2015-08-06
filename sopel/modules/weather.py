@@ -145,12 +145,13 @@ def weather(bot, trigger):
     url = 'http://weather.yahooapis.com/forecastrss?' + query
     parsed = feedparser.parse(url)
     location = parsed['feed']['title']
+    location = location.replace('Yahoo! Weather - ', '')
 
     cover = get_cover(parsed)
     temp = get_temp(parsed)
     humidity = get_humidity(parsed)
     wind = get_wind(parsed)
-    bot.say(u'%s: %s, %s, %s, %s' % (location, cover, temp, humidity, wind))
+    bot.say(u'%s: %s: %s, %s, %s, %s' % (trigger.nick, location, cover, temp, humidity, wind))
 
 
 @commands('setlocation', 'setwoeid')
