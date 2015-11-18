@@ -21,8 +21,6 @@ postapiurl = 0
 @commands('fm', 'np', 'last', 'lastfm')
 def lastfm(willie, trigger):
     user = ''
-    if trigger.nick == 'TheShinyPanda':
-      return
     if trigger.group(2):
         user = trigger.group(2).replace("@", trigger.nick)
     if not (user and user != ''):
