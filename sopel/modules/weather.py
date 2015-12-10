@@ -118,7 +118,7 @@ def get_wind(parsed):
     return description + ' ' + str(m_s) + 'm/s (' + degrees + ')'
 
 
-@commands('weather', 'wea')
+@commands('weather', 'wea', 'w')
 @example('.weather London')
 def weather(bot, trigger):
     """.weather location - Show the weather at the given location."""
