@@ -1,7 +1,6 @@
-# coding=utf8
+# coding=utf-8
 """Tools for getting and displaying the time."""
-from __future__ import unicode_literals
-from __future__ import absolute_import
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import datetime
 try:
@@ -77,21 +76,27 @@ def get_timezone(db=None, config=None, zone=None, nick=None, channel=None):
     This function relies on `pytz` being available. If it is not available,
     `None` will always be returned.
     """
+    def _check(zone):
+        try:
+            return validate_timezone(zone)
+        except ValueError:
+            return None
+
     if not pytz:
         return None
     tz = None
 
     if zone:
-        tz = validate_timezone(zone)
+        tz = _check(zone)
         if not tz:
-            tz = validate_timezone(
+            tz = _check(
                 db.get_nick_or_channel_value(zone, 'timezone'))
     if not tz and nick:
-        tz = validate_timezone(db.get_nick_value(nick, 'timezone'))
+        tz = _check(db.get_nick_value(nick, 'timezone'))
     if not tz and channel:
-        tz = validate_timezone(db.get_channel_value(channel, 'timezone'))
+        tz = _check(db.get_channel_value(channel, 'timezone'))
     if not tz and config and config.core.default_timezone:
-        tz = validate_timezone(config.core.default_timezone)
+        tz = _check(config.core.default_timezone)
     return tz
 
 

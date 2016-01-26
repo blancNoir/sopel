@@ -1,15 +1,8 @@
-# coding=utf8
-"""
-reddit-info.py - Sopel Reddit module
-Author: Edward Powell, embolalia.net
-About: http://sopel.chat
+# coding=utf-8
+# Author: Elsie Powell, embolalia.com
+from __future__ import unicode_literals, absolute_import, print_function, division
 
-This module provides special tools for reddit, namely showing detailed
-info about reddit posts
-"""
-from __future__ import unicode_literals
-
-from sopel.module import commands, rule, example, NOLIMIT, OP
+from sopel.module import commands, rule, example, require_chanmsg, NOLIMIT, OP
 from sopel.formatting import bold, color, colors
 from sopel.web import USER_AGENT
 from sopel.tools import SopelMemory, time
@@ -153,6 +146,7 @@ def auto_redditor_info(bot, trigger):
     redditor_info(bot, trigger)
 
 
+@require_chanmsg('.setsfw is only permitted in channels')
 @commands('setsafeforwork', 'setsfw')
 @example('.setsfw true')
 @example('.setsfw false')
@@ -164,7 +158,10 @@ def update_channel(bot, trigger):
     if bot.privileges[trigger.sender][trigger.nick] < OP:
         return
     else:
-        sfw = trigger.group(3).strip().lower() == 'true'
+        param = 'true'
+        if trigger.group(2) and trigger.group(3):
+            param = trigger.group(3).strip().lower()
+        sfw = param == 'true'
         bot.db.set_channel_value(trigger.sender, 'sfw', sfw)
         if sfw:
             bot.reply('Got it. %s is now flagged as SFW.' % trigger.sender)
@@ -182,6 +179,8 @@ def get_channel_sfw(bot, trigger):
     channel = trigger.group(2)
     if not channel:
         channel = trigger.sender
+        if channel.is_nick():
+            return bot.say('.getsfw with no channel param is only permitted in channels')
 
     channel = channel.strip()
 

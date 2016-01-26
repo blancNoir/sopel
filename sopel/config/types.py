@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """Types for creating section definitions.
 
 A section definition consists of a subclass of ``StaticSection``, on which any
@@ -24,7 +24,7 @@ As an example, if one wanted to define the ``[spam]`` section as having an
     ValueError: ListAttribute value must be a list.
 """
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 import os.path
 import sys
 from sopel.tools import get_input
@@ -46,7 +46,7 @@ class NO_DEFAULT(object):
 class StaticSection(object):
     """A configuration section with parsed and validated settings.
 
-    This class is intended to be subclassed with added ``ValidatedAttribute``s.
+    This class is intended to be subclassed with added ``ValidatedAttribute``\s.
     """
     def __init__(self, config, section_name, validate=True):
         if not config.parser.has_section(section_name):
@@ -69,7 +69,7 @@ class StaticSection(object):
                                                                   value)
                     )
 
-    def configure_setting(self, name, prompt=None, default=NO_DEFAULT):
+    def configure_setting(self, name, prompt, default=NO_DEFAULT):
         """Return a validated value for this attribute from the terminal.
 
         ``prompt`` will be the docstring of the attribute if not given.
@@ -81,7 +81,6 @@ class StaticSection(object):
         not the attribute's default.
         """
         clazz = getattr(self.__class__, name)
-        prompt = prompt or clazz.__doc__
         if default is NO_DEFAULT:
             try:
                 default = getattr(self, name)
@@ -93,7 +92,7 @@ class StaticSection(object):
                     default = clazz.default
         while True:
             try:
-                value = clazz.configure(prompt, default)
+                value = clazz.configure(prompt, default, self._parent, self._section_name)
             except ValueError as exc:
                 print(exc)
             else:
@@ -112,7 +111,7 @@ class BaseValidated(object):
         self.name = name
         self.default = default
 
-    def configure(self, prompt, default):
+    def configure(self, prompt, default, parent, section_name):
         """With the prompt and default, parse and return a value from terminal.
         """
         if default is not NO_DEFAULT and default is not None:
@@ -203,31 +202,38 @@ class ValidatedAttribute(BaseValidated):
     def parse(self, value):
         return value
 
-    def configure(self, prompt, default):
+    def configure(self, prompt, default, parent, section_name):
         if self.parse == _parse_boolean:
             prompt += ' (y/n)'
             default = 'y' if default else 'n'
-        return super(ValidatedAttribute, self).configure(prompt, default)
+        return super(ValidatedAttribute, self).configure(prompt, default, parent, section_name)
 
 
 class ListAttribute(BaseValidated):
     """A config attribute containing a list of string values.
 
     Values are saved to the file as a comma-separated list. It does not
-    currently support commas within items in the list."""
-    def __init__(self, name, default=None):
+    currently support commas within items in the list. By default, the spaces
+    before and after each item are stripped; you can override this by passing
+    ``strip=False``."""
+    def __init__(self, name, strip=True, default=None):
         default = default or []
         super(ListAttribute, self).__init__(name, default=default)
+        self.strip = strip
 
     def parse(self, value):
-        return value.split(',')
+        value = value.split(',')
+        if self.strip:
+            return [v.strip() for v in value]
+        else:
+            return value
 
     def serialize(self, value):
-        if not isinstance(value, list):
+        if not isinstance(value, (list, set)):
             raise ValueError('ListAttribute value must be a list.')
         return ','.join(value)
 
-    def configure(self, prompt, default):
+    def configure(self, prompt, default, parent, section_name):
         each_prompt = '?'
         if isinstance(prompt, tuple):
             each_prompt = prompt[1]
@@ -305,15 +311,27 @@ class FilenameAttribute(BaseValidated):
         value = self.serialize(main_config, this_section, value)
         instance._parser.set(instance._section_name, self.name, value)
 
+    def configure(self, prompt, default, parent, section_name):
+        """With the prompt and default, parse and return a value from terminal.
+        """
+        if default is not NO_DEFAULT and default is not None:
+            prompt = '{} [{}]'.format(prompt, default)
+        value = get_input(prompt + ' ')
+        if not value and default is NO_DEFAULT:
+            raise ValueError("You must provide a value for this option.")
+        value = value or default
+        return self.parse(parent, section_name, value)
+
     def parse(self, main_config, this_section, value):
         if value is None:
             return
+
+        value = os.path.expanduser(value)
+
         if not os.path.isabs(value):
             if not self.relative:
                 raise ValueError("Value must be an absolute path.")
             value = os.path.join(main_config.homedir, value)
-
-        value = os.path.expanduser(value)
 
         if self.directory and not os.path.isdir(value):
             try:

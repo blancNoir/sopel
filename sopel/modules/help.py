@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """
 help.py - Sopel Help Module
 Copyright 2008, Sean B. Palmer, inamidst.com
@@ -7,21 +7,22 @@ Licensed under the Eiffel Forum License 2.
 
 http://sopel.chat
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
+import textwrap
+import collections
+
+from sopel.formatting import bold
 from sopel.module import commands, rule, example, priority
-from sopel.tools import iterkeys
 
 
 @rule('$nick' '(?i)(help|doc) +([A-Za-z]+)(?:\?+)?$')
 @example('.help tell')
-@commands('help')
+@commands('help', 'commands')
 @priority('low')
 def help(bot, trigger):
     """Shows a command's documentation, and possibly an example."""
-    if not trigger.group(2):
-        bot.reply('Say .help <command> (for example .help c) to get help for a command, or .commands for a list of commands.')
-    else:
+    if trigger.group(2):
         name = trigger.group(2)
         name = name.lower()
 
@@ -40,18 +41,24 @@ def help(bot, trigger):
                 msgfun(line)
             if bot.doc[name][1]:
                 msgfun('e.g. ' + bot.doc[name][1])
+    else:
+        if not trigger.is_privmsg:
+            bot.reply("I'm sending you a list of my commands in a private message!")
+        bot.say(
+            'You can see more info about any of these commands by doing .help '
+            '<command> (e.g. .help time)',
+            trigger.nick
+        )
 
-
-@commands('commands')
-@priority('low')
-def commands(bot, trigger):
-    """Return a list of bot's commands"""
-    names = ', '.join(sorted(iterkeys(bot.doc)))
-    if not trigger.is_privmsg:
-        bot.reply("I am sending you a private message of all my commands!")
-    bot.msg(trigger.nick, 'Commands I recognise: ' + names + '.', max_messages=10)
-    bot.msg(trigger.nick, ("For help, do '%s: help example' where example is the " +
-                           "name of the command you want help for.") % bot.nick)
+        name_length = max(6, max(len(k) for k in bot.command_groups.keys()))
+        for category, cmds in collections.OrderedDict(sorted(bot.command_groups.items())).items():
+            category = category.upper().ljust(name_length)
+            cmds = '  '.join(cmds)
+            msg = bold(category) + '  ' + cmds
+            indent = ' ' * (name_length + 2)
+            msg = textwrap.wrap(msg, subsequent_indent=indent)
+            for line in msg:
+                bot.say(line, trigger.nick)
 
 
 @rule('$nick' r'(?i)help(?:[?!]+)?$')

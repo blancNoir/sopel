@@ -1,10 +1,10 @@
-# coding=utf8
+# coding=utf-8
 """GeoIP lookup module"""
 # Copyright 2011, Dimitri Molenaars, TyRope.nl,
 # Copyright © 2013, Elad Alfassa <elad@fedoraproject.org>
 # Licensed under the Eiffel Forum License 2.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import pygeoip
 import socket
@@ -118,6 +118,8 @@ def ip(bot, trigger):
         response += " | Location: %s" % gi_city.country_name_by_name(query)
     except AttributeError:
         response += ' | Location: Unknown'
+    except socket.gaierror:
+        return bot.say('[IP/Host Lookup] Unable to resolve IP/Hostname')
 
     region_data = gi_city.region_by_name(query)
     try:
