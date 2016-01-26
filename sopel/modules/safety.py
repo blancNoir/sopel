@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """
 safety.py - Alerts about malicious URLs
 Copyright © 2014, Elad Alfassa, <elad@fedoraproject.org>
@@ -6,8 +6,8 @@ Licensed under the Eiffel Forum License 2.
 
 This module uses virustotal.com
 """
-from __future__ import unicode_literals
-from __future__ import print_function
+from __future__ import unicode_literals, absolute_import, print_function, division
+
 import sopel.web as web
 from sopel.config.types import StaticSection, ValidatedAttribute, ListAttribute
 from sopel.formatting import color, bold
@@ -31,12 +31,12 @@ else:
 LOGGER = get_logger(__name__)
 
 vt_base_api_url = 'https://www.virustotal.com/vtapi/v2/url/'
-malware_domains = []
+malware_domains = set()
 known_good = []
 
 
 class SafetySection(StaticSection):
-    enabled_by_default = ValidatedAttribute('enabled_by_default', bool, True)
+    enabled_by_default = ValidatedAttribute('enabled_by_default', bool, default=True)
     """Enable URL safety in all channels where it isn't explicitly disabled."""
     known_good = ListAttribute('known_good')
     """List of "known good" domains to ignore."""
@@ -46,12 +46,18 @@ class SafetySection(StaticSection):
 
 def configure(config):
     config.define_section('safety', SafetySection)
-    config.safety.configure_setting('enabled_by_default')
-    config.safety.configure_setting('known_good')
+    config.safety.configure_setting(
+        'enabled_by_default',
+        "Enable URL safety in channels that don't specifically disable it?",
+    )
+    config.safety.configure_setting(
+        'known_good',
+        'Enter any domains to whitelist',
+    )
     config.safety.configure_setting(
         'vt_api_key',
-        "Optionaly, enter a VirusTotal API key to improve malicious URL "
-        "protection. Otherwise, only the Malwarebytes DB will be used."
+        "Optionally, enter a VirusTotal API key to improve malicious URL "
+        "protection.\nOtherwise, only the Malwarebytes DB will be used."
     )
 
 
@@ -71,7 +77,9 @@ def setup(bot):
         _download_malwaredomains_db(loc)
     with open(loc, 'r') as f:
         for line in f:
-            malware_domains.append(unicode(line).strip().lower())
+            clean_line = unicode(line).strip().lower()
+            if clean_line != '':
+                malware_domains.add(clean_line)
 
 
 def _download_malwaredomains_db(path):
@@ -107,7 +115,7 @@ def url_handler(bot, trigger):
     if not check:
         return  # Not overriden by DB, configured default off
 
-    netloc = urlparse(trigger).netloc
+    netloc = urlparse(trigger.group(1)).netloc
     if any(regex.search(netloc) for regex in known_good):
         return  # Whitelisted
 
@@ -135,7 +143,7 @@ def url_handler(bot, trigger):
                 result = bot.memory['safety_cache'][trigger]
             positives = result['positives']
             total = result['total']
-    except Exception as e:
+    except Exception:
         LOGGER.debug('Error from checking URL with VT.', exc_info=True)
         pass  # Ignoring exceptions with VT so MalwareDomains will always work
 
@@ -148,7 +156,7 @@ def url_handler(bot, trigger):
     if positives > 1:
         # Possibly malicious URL detected!
         confidence = '{}%'.format(round((positives / total) * 100))
-        msg = 'link posted by %s is possibliy malicious ' % bold(trigger.nick)
+        msg = 'link posted by %s is possibly malicious ' % bold(trigger.nick)
         msg += '(confidence %s - %s/%s)' % (confidence, positives, total)
         bot.say('[' + bold(color('WARNING', 'red')) + '] ' + msg)
         if strict:

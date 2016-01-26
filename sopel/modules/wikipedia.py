@@ -1,12 +1,7 @@
-# coding=utf8
-"""
-wikipedia.py - Sopel Wikipedia Module
-Copyright 2013 Edward Powell - embolalia.net
-Licensed under the Eiffel Forum License 2.
-
-http://sopel.chat
-"""
-from __future__ import unicode_literals
+# coding=utf-8
+# Copyright 2013 Elsie Powell - embolalia.com
+# Licensed under the Eiffel Forum License 2.
+from __future__ import unicode_literals, absolute_import, print_function, division
 from sopel import web, tools
 from sopel.config.types import StaticSection, ValidatedAttribute
 from sopel.module import NOLIMIT, commands, example, rule
@@ -15,7 +10,8 @@ import re
 
 import sys
 if sys.version_info.major < 3:
-    from urlparse import unquote
+    from urlparse import unquote as _unquote
+    unquote = lambda s: _unquote(s.encode('utf-8')).decode('utf-8')
 else:
     from urllib.parse import unquote
 
@@ -23,7 +19,7 @@ REDIRECT = re.compile(r'^REDIRECT (.*)')
 
 
 class WikipediaSection(StaticSection):
-    default_lang = ValidatedAttribute('default_lang')
+    default_lang = ValidatedAttribute('default_lang', default='en')
     """The default language to find articles from."""
     lang_per_channel = ValidatedAttribute('lang_per_channel')
 

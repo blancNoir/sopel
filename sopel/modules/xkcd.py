@@ -1,14 +1,9 @@
-# coding=utf8
-"""
-xkcd.py - XKCD Module
-Copyright 2010, Michael Yanovich (yanovich.net), and Morgan Goose
-Copyright 2012, Lior Ramati
-Copyright 2013, Edward Powell (embolalia.com)
-Licensed under the Eiffel Forum License 2.
-
-http://sopel.chat
-"""
-from __future__ import unicode_literals
+# coding=utf-8
+# Copyright 2010, Michael Yanovich (yanovich.net), and Morgan Goose
+# Copyright 2012, Lior Ramati
+# Copyright 2013, Elsie Powell (embolalia.com)
+# Licensed under the Eiffel Forum License 2.
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import json
 import random

@@ -1,18 +1,19 @@
-# coding=utf8
-"""
-search.py - Sopel Web Search Module
-Copyright 2008-9, Sean B. Palmer, inamidst.com
-Copyright 2012, Edward Powell, embolalia.net
-Licensed under the Eiffel Forum License 2.
-
-http://sopel.chat
-"""
-from __future__ import unicode_literals
+# coding=utf-8
+# Copyright 2008-9, Sean B. Palmer, inamidst.com
+# Copyright 2012, Elsie Powell, embolalia.com
+# Licensed under the Eiffel Forum License 2.
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import re
 from sopel import web
 from sopel.module import commands, example
 import json
+import sys
+
+if sys.version_info.major < 3:
+    from urllib import quote_plus
+else:
+    from urllib.parse import quote_plus
 
 
 def formatnumber(n):
@@ -53,6 +54,11 @@ def duck_api(query):
     if '!bang' in query.lower():
         return 'https://duckduckgo.com/bang.html'
 
+    # This fixes issue #885 (https://github.com/sopel-irc/sopel/issues/885)
+    # It seems that duckduckgo api redirects to its Instant answer API html page
+    # if the query constains special charactares that aren't urlencoded.
+    # So in order to always get a JSON response back the query is urlencoded
+    query = quote_plus(query)
     uri = 'http://api.duckduckgo.com/?q=%s&format=json&no_html=1&no_redirect=1' % query
     results = json.loads(web.get(uri))
     if results['Redirect']:
@@ -97,7 +103,7 @@ def search(bot, trigger):
     du = duck_search(query) or '-'
 
     if bu == du:
-        result = '%s (b, d)' % gu
+        result = '%s (b, d)' % bu
     else:
         if len(bu) > 150:
             bu = '(extremely long link)'

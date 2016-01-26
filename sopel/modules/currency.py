@@ -1,19 +1,14 @@
-# coding=utf8
-"""currency.py - Sopel Exchange Rate Module
-Copyright 2013 Edward Powell, embolalia.com
-Licensed under the Eiffel Forum License 2
-
-http://sopel.chat
-"""
-from __future__ import unicode_literals
+# coding=utf-8
+# Copyright 2013 Elsie Powell, embolalia.com
+# Licensed under the Eiffel Forum License 2
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import json
-from lxml import etree
+import xmltodict
 import re
 
 from sopel import web
 from sopel.module import commands, example, NOLIMIT
-
 
 # The Canadian central bank has better exchange rate data than the Fed, the
 # Bank of England, or the European Central Bank. Who knew?
@@ -27,6 +22,7 @@ regex = re.compile(r'''
 
 
 def get_rate(code):
+    code = code.upper()
     if code == 'CAD':
         return 1, 'Canadian Dollar'
     elif code == 'BTC':
@@ -36,16 +32,16 @@ def get_rate(code):
     data, headers = web.get(base_url.format(code), dont_decode=True, return_headers=True)
     if headers['_http_status'] == 404:
         return False, False
-    xml = etree.fromstring(data)
-    namestring = xml.find('{http://purl.org/rss/1.0/}channel/'
-                          '{http://purl.org/rss/1.0/}title').text
+    namespaces = {
+        'http://www.cbwiki.net/wiki/index.php/Specification_1.1': 'cb',
+        'http://purl.org/rss/1.0/': None,
+        'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf'
+    }
+    xml = xmltodict.parse(data, process_namespaces=True, namespaces=namespaces).get('rdf:RDF')
+    namestring = xml.get('channel').get('title').get('#text')
     name = namestring[len('Bank of Canada noon rate: '):]
     name = re.sub(r'\s*\(noon\)\s*', '', name)
-    rate = xml.find(
-        '{http://purl.org/rss/1.0/}item/'
-        '{http://www.cbwiki.net/wiki/index.php/Specification_1.1}statistics/'
-        '{http://www.cbwiki.net/wiki/index.php/Specification_1.1}exchangeRate/'
-        '{http://www.cbwiki.net/wiki/index.php/Specification_1.1}value').text
+    rate = xml.get('item').get('cb:statistics').get('cb:exchangeRate').get('cb:value').get('#text')
     return float(rate), name
 
 
@@ -81,14 +77,13 @@ def display(bot, amount, of, to):
         if not to_name:
             bot.reply("Unknown currency: %s" % to)
             return
-    except Exception as e:
-        raise
+    except Exception:
         bot.reply("Something went wrong while I was getting the exchange rate.")
         return NOLIMIT
 
     result = amount / of_rate * to_rate
-    bot.say("{} {} ({}) = {} {} ({})".format(amount, of, of_name,
-                                             result, to, to_name))
+    bot.say("{} {} ({}) = {} {} ({})".format(amount, of.upper(), of_name,
+                                             result, to.upper(), to_name))
 
 
 @commands('btc', 'bitcoin')

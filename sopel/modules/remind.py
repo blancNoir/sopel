@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """
 remind.py - Sopel Reminder Module
 Copyright 2011, Sean B. Palmer, inamidst.com
@@ -6,7 +6,7 @@ Licensed under the Eiffel Forum License 2.
 
 http://sopel.chat
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import os
 import re
@@ -126,6 +126,12 @@ periods = '|'.join(scaling.keys())
 @example('.in 3h45m Go to class')
 def remind(bot, trigger):
     """Gives you a reminder in the given amount of time."""
+    if not trigger.group(2):
+        bot.say("Missing arguments for reminder command.")
+        return NOLIMIT
+    if trigger.group(3) and not trigger.group(4):
+        bot.say("No message given for reminder.")
+        return NOLIMIT
     duration = 0
     message = filter(None, re.split('(\d+(?:\.\d+)? ?(?:(?i)' + periods + ')) ?',
                                     trigger.group(2))[1:])
@@ -159,8 +165,14 @@ def at(bot, trigger):
     Gives you a reminder at the given time. Takes hh:mm:ssTimezone
     message. Timezone is any timezone Sopel takes elsewhere; the best choices
     are those from the tzdb; a list of valid options is available at
-    http://dft.ba/-tz . The seconds and timezone are optional.
+    http://sopel.chat/tz . The seconds and timezone are optional.
     """
+    if not trigger.group(2):
+        bot.say("No arguments given for reminder command.")
+        return NOLIMIT
+    if trigger.group(3) and not trigger.group(4):
+        bot.say("No message given for reminder.")
+        return NOLIMIT
     regex = re.compile(r'(\d+):(\d+)(?::(\d+))?([^\s\d]+)? (.*)')
     match = regex.match(trigger.group(2))
     if not match:

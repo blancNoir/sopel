@@ -1,10 +1,10 @@
-# coding=utf8
+# coding=utf-8
 """
 ping.py - Sopel Ping Module
 Author: Sean B. Palmer, inamidst.com
 About: http://sopel.chat
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import random
 from sopel.module import rule, priority, thread
@@ -12,10 +12,7 @@ from sopel.module import rule, priority, thread
 
 @rule(r'(?i)(hi|hello|hey),? $nickname[ \t]*$')
 def hello(bot, trigger):
-    if trigger.owner:
-        greeting = random.choice(('Fuck off,', 'Screw you,', 'Go away'))
-    else:
-        greeting = random.choice(('Hi', 'Hey', 'Hello'))
+    greeting = random.choice(('Hi', 'Hey', 'Hello'))
     punctuation = random.choice(('', '!'))
     bot.say(greeting + ' ' + trigger.nick + punctuation)
 

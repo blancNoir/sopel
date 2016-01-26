@@ -1,28 +1,34 @@
 # coding=utf-8
-"""
-__init__.py - Sopel Init Module
-Copyright 2008, Sean B. Palmer, inamidst.com
-Copyright 2012, Edward Powell, http://embolalia.net
-Copyright © 2012, Elad Alfassa <elad@fedoraproject.org>
+# ASCII ONLY IN THIS FILE THOUGH!!!!!!!
+# Python does some stupid bullshit of respecting LC_ALL over the encoding on the
+# file, so in order to undo Python's ridiculous fucking idiocy, we have to have
+# our own check.
 
-Licensed under the Eiffel Forum License 2.
+# Copyright 2008, Sean B. Palmer, inamidst.com
+# Copyright 2012, Elsie Powell, http://embolalia.com
+# Copyright 2012, Elad Alfassa <elad@fedoraproject.org>
+#
+# Licensed under the Eiffel Forum License 2.
 
-http://sopel.chat/
-"""
-from __future__ import unicode_literals
-from __future__ import absolute_import
+from __future__ import unicode_literals, absolute_import, print_function, division
+import os
+import sys
+if hasattr(os, "getenv") and os.getenv("LC_ALL") == "C":
+    print('WARNING!!! LC_ALL is set to "C", which makes Python do stupid '
+          'things. If you get strange errors, please unset it, or set it to '
+          'something like "en_US.UTF-8".', file=sys.stderr)
+
 
 from collections import namedtuple
-import os
 import re
 import time
 import traceback
 import signal
 
-__version__ = '6.0.0a4'
+__version__ = '6.2.1'
 
 
-def _version_info():
+def _version_info(version=__version__):
     regex = re.compile(r'(\d+)\.(\d+)\.(\d+)(?:(a|b|rc)(\d+))?.*')
     version_groups = regex.match(__version__).groups()
     major, minor, micro = (int(piece) for piece in version_groups[0:3])
@@ -34,7 +40,7 @@ def _version_info():
         level = 'beta'
     elif level == 'rc':
         level = 'candidate'
-    elif not level and version_groups[5] is None:
+    elif not level and version_groups[4] is None:
         level = 'final'
     else:
         level = 'alpha'

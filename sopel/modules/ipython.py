@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """
 ipython.py - sopel ipython console!
 Copyright © 2014, Elad Alfassa <elad@fedoraproject.org>
@@ -6,7 +6,7 @@ Licensed under the Eiffel Forum License 2.
 
 Sopel: http://sopel.chat/
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 import sopel
 import sys
 if sys.version_info.major >= 3:

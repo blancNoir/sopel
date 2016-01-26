@@ -1,7 +1,5 @@
-# coding=utf8
+# coding=utf-8
 """
-*Availability: 3+; 6+ for configuration section definitions.*
-
 The config object provides a simplified to access Sopel's configuration file.
 The sections of the file are attributes of the object, and the keys in the
 section are attributes of that. So, for example, the ``eggs`` attribute in the
@@ -12,14 +10,14 @@ to the config object with ``define_section``. When this is done, only the
 defined keys will be available. A section can not be given more than one
 definition. The ``[core]`` section is defined with ``CoreSection`` when the
 object is initialized.
+
+.. versionadded:: 6.0.0
 """
-# Copyright 2012-2015, Edward Powell, embolalia.net
+# Copyright 2012-2015, Elsie Powell, embolalia.com
 # Copyright © 2012, Elad Alfassa <elad@fedoraproject.org>
 # Licensed under the Eiffel Forum License 2.
 
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 from sopel.tools import iteritems, stderr
 import sopel.tools
@@ -27,9 +25,10 @@ from sopel.tools import get_input
 import sopel.loader
 import os
 import sys
-try:
+if sys.version_info.major < 3:
     import ConfigParser
-except ImportError:
+else:
+    basestring = str
     import configparser as ConfigParser
 import sopel.config.core_section
 from sopel.config.types import StaticSection
@@ -110,9 +109,14 @@ class Config(object):
         if not issubclass(cls_, StaticSection):
             raise ValueError("Class must be a subclass of StaticSection.")
         current = getattr(self, name, None)
+        current_name = str(current.__class__)
+        new_name = str(cls_)
         if (current is not None and not isinstance(current, self.ConfigSection)
-                and not current.__class__ == cls_):
-            raise ValueError("Can not re-define class for section.")
+                and not current_name == new_name):
+            raise ValueError(
+                "Can not re-define class for section from {} to {}.".format(
+                    current_name, new_name)
+            )
         setattr(self, name, cls_(self, name, validate=validate))
 
     class ConfigSection(object):

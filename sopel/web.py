@@ -12,7 +12,7 @@ HTTP HEAD.
 #Copyright © 2012-2013, Elad Alfassa, <elad@fedoraproject.org>
 #Licensed under the Eiffel Forum License 2.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import re
 import sys
@@ -35,6 +35,7 @@ else:
     from urllib.parse import urlparse
     from urllib.parse import urlunparse
     unichr = chr
+    unicode = str
 
 try:
     import ssl
@@ -48,6 +49,7 @@ except ImportError:
     has_ssl = False
 
 USER_AGENT = 'Sopel/{} (http://sopel.chat)'.format(__version__)
+ca_certs = None  # Will be overriden when config loads. This is for an edge case.
 
 
 # HTTP GET
@@ -170,7 +172,8 @@ class VerifiedHTTPSConnection(httplib.HTTPConnection):
             if self._tunnel_host:
                 self.sock = sock
                 self._tunnel()
-            if not os.path.exists(ca_certs):
+            if not ca_certs or not os.path.exists(ca_certs):
+                sock.close()
                 raise Exception('CA Certificate bundle %s is not readable' % ca_certs)
             self.sock = ssl.wrap_socket(sock,
                                         ca_certs=ca_certs,

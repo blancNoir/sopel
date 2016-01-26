@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 """
 reload.py - Sopel Module Reloader Module
 Copyright 2008, Sean B. Palmer, inamidst.com
@@ -6,8 +6,9 @@ Licensed under the Eiffel Forum License 2.
 
 http://sopel.chat
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
+import collections
 import sys
 import time
 from sopel.tools import iteritems
@@ -29,8 +30,12 @@ def f_reload(bot, trigger):
         return bot.reply('What?')
 
     if not name or name == '*' or name.upper() == 'ALL THE THINGS':
-        bot.callables = None
-        bot.commands = None
+        bot._callables = {
+            'high': collections.defaultdict(list),
+            'medium': collections.defaultdict(list),
+            'low': collections.defaultdict(list)
+        }
+        bot.command_groups = collections.defaultdict(list)
         bot.setup()
         return bot.reply('done')
 

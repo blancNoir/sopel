@@ -1,12 +1,12 @@
-# coding=utf8
+# coding=utf-8
 """
 calc.py - Sopel Calculator Module
 Copyright 2008, Sean B. Palmer, inamidst.com
 Licensed under the Eiffel Forum License 2.
 
-http://sopel.dfbta.net
+http://sopel.chat
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function, division
 
 import re
 from sopel import web
@@ -17,7 +17,11 @@ import sys
 if sys.version_info.major < 3:
     import HTMLParser
 else:
+    unichr = chr
     import html.parser as HTMLParser
+
+
+BASE_TUMBOLIA_URI = 'https://tumbolia-two.appspot.com/'
 
 
 @commands('c', 'calc')
@@ -52,7 +56,7 @@ def py(bot, trigger):
         return bot.say("Need an expression to evaluate")
 
     query = trigger.group(2)
-    uri = 'http://tumbolia-hrd.appspot.com/py/'
+    uri = BASE_TUMBOLIA_URI + 'py/'
     answer = web.get(uri + web.quote(query))
     if answer:
         #bot.say can potentially lead to 3rd party commands triggering.
@@ -69,11 +73,11 @@ def wa(bot, trigger):
     if not trigger.group(2):
         return bot.reply("No search term.")
     query = trigger.group(2)
-    uri = 'http://tumbolia-hrd.appspot.com/wa/'
+    uri = BASE_TUMBOLIA_URI + 'wa/'
     try:
         answer = web.get(uri + web.quote(query.replace('+', 'plus')), 45,
                          dont_decode=True)
-    except timeout as e:
+    except timeout:
         return bot.say('[WOLFRAM ERROR] Request timed out')
     if answer:
         answer = answer.decode('unicode_escape')
