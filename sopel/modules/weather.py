@@ -1,19 +1,13 @@
-# coding=utf8
-"""
-weather.py - Sopel Yahoo! Weather Module
-Copyright 2008, Sean B. Palmer, inamidst.com
-Copyright 2012, Edward Powell, embolalia.net
-Licensed under the Eiffel Forum License 2.
-
-http://sopel.chat
-"""
+# coding=utf-8
+# Copyright 2008, Sean B. Palmer, inamidst.com
+# Copyright 2012, Elsie Powell, embolalia.com
+# Licensed under the Eiffel Forum License 2.
 from __future__ import unicode_literals, absolute_import, print_function, division
 
 from sopel import web
 from sopel.module import commands, example, NOLIMIT
 
 import xmltodict
-import collections
 
 
 def woeid_search(query):
@@ -22,29 +16,16 @@ def woeid_search(query):
     node for the result, so that location data can still be retrieved. Returns
     None if there is no result, or the woeid field is empty.
     """
-    query = 'q=select woeid from geo.places where text="%s"' % query
+    query = 'q=select * from geo.places where text="%s"' % query
     body = web.get('http://query.yahooapis.com/v1/public/yql?' + query,
                    dont_decode=True)
     parsed = xmltodict.parse(body).get('query')
     results = parsed.get('results')
-    if type(results) is collections.OrderedDict:
-        place = results.get('place')
-        if type(place) is list:
-            return place[0]
-    if not (results):
+    if results is None or results.get('place') is None:
         return None
-    if type(results) is list:
-        first_result = results[0]
-        return results.get('place')
-    # If its not a list then it should be an Ordered dict
-    place = results.get('place')
-    if not place:
-        return None
-    if type(place) is collections.OrderedDict:
-        return place
-    if type(place) is list:
-        return place[0]
-    return None
+    if type(results.get('place')) is list:
+        return results.get('place')[0]
+    return results.get('place')
 
 
 def get_cover(parsed):
@@ -186,12 +167,18 @@ def update_woeid(bot, trigger):
 
     bot.db.set_nick_value(trigger.nick, 'woeid', woeid)
 
-    neighborhood = first_result.get('neighborhood') or ''
+    neighborhood = first_result.get('locality2') or ''
     if neighborhood:
-        neighborhood += ','
-    city = first_result.get('city') or ''
-    state = first_result.get('state') or ''
-    country = first_result.get('country') or ''
-    uzip = first_result.get('uzip') or ''
-    bot.reply('I now have you at WOEID %s (%s %s, %s, %s %s.)' %
+        neighborhood = neighborhood.get('#text') + ', '
+    city = first_result.get('locality1') or ''
+    # This is to catch cases like 'Bawlf, Alberta' where the location is
+    # thought to be a "LocalAdmin" rather than a "Town"
+    if city:
+        city = city.get('#text')
+    else:
+        city = first_result.get('name')
+    state = first_result.get('admin1').get('#text') or ''
+    country = first_result.get('country').get('#text') or ''
+    uzip = first_result.get('postal').get('#text') or ''
+    bot.reply('I now have you at WOEID %s (%s%s, %s, %s %s)' %
               (woeid, neighborhood, city, state, country, uzip))
