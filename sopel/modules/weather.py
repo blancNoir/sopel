@@ -114,7 +114,7 @@ def get_wind(parsed):
     return description + ' ' + str(m_s) + 'm/s (' + degrees + ')'
 
 
-@commands('weather', 'wea','w')
+@commands('weather', 'wea', 'w')
 @example('.weather London')
 def weather(bot, trigger):
     """.weather location - Show the weather at the given location."""
@@ -125,7 +125,7 @@ def weather(bot, trigger):
         woeid = bot.db.get_nick_value(trigger.nick, 'woeid')
         if not woeid:
             return bot.msg(trigger.sender, "I don't know where you live. " +
-                           'Give me a location, like .weather Chicago, or save your location by saying .setlocation Chicago, for example.')
+                           'Give me a location, like .weather London, or tell me where you live by saying .setlocation London, for example.')
     else:
         location = location.strip()
         woeid = bot.db.get_nick_value(location, 'woeid')
@@ -148,7 +148,7 @@ def weather(bot, trigger):
     temp = get_temp(parsed)
     humidity = get_humidity(parsed)
     wind = get_wind(parsed)
-    bot.say(u'%s: %s: %s, %s, %s, %s' % (trigger.nick, location, cover, temp, humidity, wind))
+    bot.say(u'%s: %s, %s, %s, %s' % (location, cover, temp, humidity, wind))
 
 
 @commands('setlocation', 'setwoeid')
@@ -179,6 +179,6 @@ def update_woeid(bot, trigger):
         city = first_result.get('name')
     state = first_result.get('admin1').get('#text') or ''
     country = first_result.get('country').get('#text') or ''
-    uzip = first_result.get('postal').get('#text') or ''
-    bot.reply('I now have you at WOEID %s (%s%s, %s, %s %s)' %
-              (woeid, neighborhood, city, state, country, uzip))
+    #uzip = first_result.get('postal').get('#text') or ''
+    bot.reply('I now have you at WOEID %s (%s%s, %s, %s)' %
+              (woeid, neighborhood, city, state, country))
